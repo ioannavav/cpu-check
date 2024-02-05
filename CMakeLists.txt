@@ -32,6 +32,7 @@ configure_file (
 )
 include_directories("${PROJECT_BINARY_DIR}")
 
+
 if (USE_CLANG)
 	set(CMAKE_C_COMPILER clang)
 	set(CMAKE_CXX_COMPILER clang++)
@@ -39,17 +40,15 @@ if (USE_CLANG)
 	set(CXX clang++)
 endif(USE_CLANG)
 
-# TODO required for static build?
-# set_target_properties(cpu_check PROPERTIES LINK_SEARCH_START_STATIC ON)
-# set_target_properties(cpu_check PROPERTIES LINK_SEARCH_END_STATIC ON)
-
-
 set(CMAKE_C_FLAGS_DEBUG "-g -Wall -O0")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -O0")
 set(CMAKE_C_FLAGS_RELEASE "-Wall -O2")
 set(CMAKE_CXX_FLAGS_RELEASE "-Wall -O2")
 
 set(absl_DIR ../abseil-cpp/build/install/lib/cmake/absl/)
+set(ABSL_INCLUDES ../abseil-cpp/build/install/include)
+include_directories("${ABSL_INCLUDES}")
+
 set(BUILD_STATIC ON CACHE BOOL "Build statically linked binaries")
 
 set(CMAKE_C_STANDARD 11)
@@ -61,6 +60,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)	# we want c++17 not gnu++17
 
 add_executable(cpu_check cpu_check.cc)
 add_executable(crc32c_test crc32c_test.cc)
+
+# TODO required for static build?
+set_target_properties(cpu_check PROPERTIES LINK_SEARCH_START_STATIC ON)
+set_target_properties(cpu_check PROPERTIES LINK_SEARCH_END_STATIC ON)
+
+
 
 # Third party library - available as git submodule
 add_library(farmhash third_party/farmhash/src/farmhash.cc)
@@ -86,28 +91,28 @@ endif(ARCH_SANDYBRIDGE)
 
 if (BUILD_STATIC)
 	set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
-	set(CMAKE_EXE_LINKER_FLAGS "-static-libstdc++ -static-libgcc -Xclang -load -Xclang ../../../../InsertClonedInstPass.so")
+	set(CMAKE_EXE_LINKER_FLAGS "-static-libstdc++ -static-libgcc -Xclang -load -Xclang /sailhome/vavel/new_beginning/qed_sdc/InsertClonedInstPass.so")
         # Static linking of C/C++ standard libraries
-	set(CMAKE_C_FLAGS "-Xclang -load -Xclang  ../../../../InsertClonedInstPass.so")
-        set(CMAKE_CXX_FLAGS "-Xclang -load -Xclang ../../../../InsertClonedInstPass.so") 
+	set(CMAKE_C_FLAGS "-Xclang -load -Xclang /sailhome/vavel/new_beginning/qed_sdc/InsertClonedInstPass.so" )
+	set(CMAKE_CXX_FLAGS "-Xclang -load -Xclang /sailhome/vavel/new_beginning/qed_sdc/InsertClonedInstPass.so") 
 
 endif(BUILD_STATIC)
 
-file(GLOB GLOB_ABSL "../abseil-cpp/build/*.a")
+file(GLOB GLOB_ABSL "../abseil-cpp/build/install/lib/*.a")
 
 # Needs abseil
 find_package(absl REQUIRED)
-target_link_libraries(compressor ${GLOB_ABSL} /lib/x86_64-linux-gnu/libc.a)
-target_link_libraries(crypto  ${GLOB_ABSL} /lib/x86_64-linux-gnu/libc.a)
-target_link_libraries(fvt_controller ${GLOB_ABSL} /lib/x86_64-linux-gnu/libc.a)
-target_link_libraries(malign_buffer ${GLOB_ABSL} /lib/x86_64-linux-gnu/libc.a)
-target_link_libraries(silkscreen ${GLOB_ABSL} /lib/x86_64-linux-gnu/libc.a)
-target_link_libraries(utils ${GLOB_ABSL} /lib/x86_64-linux-gnu/libc.a)
-target_link_libraries(cpu_check ${GLOB_ABSL} /lib/x86_64-linux-gnu/libc.a -static)
+target_link_libraries(compressor ${GLOB_ABSL} /lib/x86_64-linux-gnu/libc.a /usr/lib/x86_64-linux-gnu/libpthread.a)
+target_link_libraries(crypto  ${GLOB_ABSL} /lib/x86_64-linux-gnu/libc.a /usr/lib/x86_64-linux-gnu/libpthread.a)
+target_link_libraries(fvt_controller ${GLOB_ABSL} /lib/x86_64-linux-gnu/libc.a /usr/lib/x86_64-linux-gnu/libpthread.a)
+target_link_libraries(malign_buffer ${GLOB_ABSL} /lib/x86_64-linux-gnu/libc.a /usr/lib/x86_64-linux-gnu/libpthread.a)
+target_link_libraries(silkscreen ${GLOB_ABSL} /lib/x86_64-linux-gnu/libc.a /usr/lib/x86_64-linux-gnu/libpthread.a)
+target_link_libraries(utils ${GLOB_ABSL} /lib/x86_64-linux-gnu/libc.a /usr/lib/x86_64-linux-gnu/libpthread.a)
+target_link_libraries(cpu_check ${GLOB_ABSL} /lib/x86_64-linux-gnu/libc.a  /usr/lib/x86_64-linux-gnu/libpthread.a -static)
 
 # Needs pthreads
-find_package(Threads REQUIRED)
-target_link_libraries(cpu_check Threads::Threads)
+# find_package(Threads REQUIRED)
+# target_link_libraries(cpu_check Threads::Threads)
 
 # Needs zlib
 find_package (ZLIB REQUIRED)
@@ -147,6 +152,6 @@ target_link_libraries(pattern_generator malign_buffer)
 target_link_libraries(silkscreen utils)
 
 
-target_link_libraries(cpu_check avx compressor crc32c crypto fvt_controller hasher malign_buffer pattern_generator silkscreen utils ${GLOB_ABSL} -Xclang -load "-Xclang ../../../../InsertClonedInstPass.so")
+target_link_libraries(cpu_check avx compressor crc32c crypto fvt_controller hasher malign_buffer pattern_generator silkscreen utils ${GLOB_ABSL} "-Xclang -load -Xclang  /sailhome/vavel/new_beginning/qed_sdc/InsertClonedInstPass.so")
 
 install (TARGETS cpu_check DESTINATION bin)
