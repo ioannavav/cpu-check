@@ -32,13 +32,15 @@ configure_file (
 )
 include_directories("${PROJECT_BINARY_DIR}")
 
+set(CMAKE_C_COMPILER "/usr/bin/clang")
+set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
 
-if (USE_CLANG)
+#if (USE_CLANG)
 	set(CMAKE_C_COMPILER clang)
 	set(CMAKE_CXX_COMPILER clang++)
 	set(CC clang)
 	set(CXX clang++)
-endif(USE_CLANG)
+#endif(USE_CLANG)
 
 set(CMAKE_C_FLAGS_DEBUG "-g -Wall -O0")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -O0")
@@ -91,10 +93,10 @@ endif(ARCH_SANDYBRIDGE)
 
 if (BUILD_STATIC)
 	set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
-	set(CMAKE_EXE_LINKER_FLAGS "-static-libstdc++ -static-libgcc -Xclang -load -Xclang /sailhome/vavel/new_beginning/qed_sdc/InsertClonedInstPass.so")
+	set(CMAKE_EXE_LINKER_FLAGS "-static-libstdc++ -static-libgcc -flegacy-pass-manager -Xclang -load -Xclang /home/NEW_GIT/qed_sdc/InsertClonedInstPass.so")
         # Static linking of C/C++ standard libraries
-	set(CMAKE_C_FLAGS "-Xclang -load -Xclang /sailhome/vavel/new_beginning/qed_sdc/InsertClonedInstPass.so" )
-	set(CMAKE_CXX_FLAGS "-Xclang -load -Xclang /sailhome/vavel/new_beginning/qed_sdc/InsertClonedInstPass.so") 
+	set(CMAKE_C_FLAGS "-flegacy-pass-manager -Xclang -load -Xclang /home/NEW_GIT/qed_sdc/InsertClonedInstPass.so" )
+	set(CMAKE_CXX_FLAGS "-flegacy-pass-manager -Xclang -load -Xclang /home/NEW_GIT/qed_sdc/InsertClonedInstPass.so") 
 
 endif(BUILD_STATIC)
 
@@ -111,8 +113,8 @@ target_link_libraries(utils ${GLOB_ABSL} /lib/x86_64-linux-gnu/libc.a /usr/lib/x
 target_link_libraries(cpu_check ${GLOB_ABSL} /lib/x86_64-linux-gnu/libc.a  /usr/lib/x86_64-linux-gnu/libpthread.a -static)
 
 # Needs pthreads
-# find_package(Threads REQUIRED)
-# target_link_libraries(cpu_check Threads::Threads)
+find_package(Threads REQUIRED)
+target_link_libraries(cpu_check Threads::Threads)
 
 # Needs zlib
 find_package (ZLIB REQUIRED)
@@ -152,6 +154,6 @@ target_link_libraries(pattern_generator malign_buffer)
 target_link_libraries(silkscreen utils)
 
 
-target_link_libraries(cpu_check avx compressor crc32c crypto fvt_controller hasher malign_buffer pattern_generator silkscreen utils ${GLOB_ABSL} "-Xclang -load -Xclang  /sailhome/vavel/new_beginning/qed_sdc/InsertClonedInstPass.so")
+target_link_libraries(cpu_check avx compressor crc32c crypto fvt_controller hasher malign_buffer pattern_generator silkscreen utils ${GLOB_ABSL} "-flegacy-pass-manager -Xclang -load -Xclang /home/NEW_GIT/qed_sdc/InsertClonedInstPass.so" -static)
 
 install (TARGETS cpu_check DESTINATION bin)
