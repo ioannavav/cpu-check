@@ -49,7 +49,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -O0")
 set(CMAKE_C_FLAGS_RELEASE "-Wall -O2")
 set(CMAKE_CXX_FLAGS_RELEASE "-Wall -O2")
 
-set(absl_DIR ../abseil-cpp/build/)
+set(absl_DIR ../abseil-cpp/build/install/lib/cmake/absl/)
 set(BUILD_STATIC ON CACHE BOOL "Build statically linked binaries")
 
 set(CMAKE_C_STANDARD 11)
