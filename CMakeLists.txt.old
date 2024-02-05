@@ -1,0 +1,305 @@
+# Copyright 2020 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++")
+####set(absl_DIR /root/abseil_bin/lib/cmake/absl)
+set(absl_DIR /root/Source/CMakeProject/install/lib/cmake/absl/)
+set(BUILD_STATIC ON CACHE BOOL "Build statically linked binaries")
+
+cmake_minimum_required (VERSION 3.2)
+set(CMAKE_C_COMPILER "/usr/bin/clang")
+set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
+project (cpu_check VERSION 20181130 LANGUAGES C CXX)
+
+# Options
+# Use clang/llvm by default.
+option(USE_CLANG "build with clang" ON)
+# Build semi-statically by default.
+option(BUILD_STATIC "build targets semi-statically linked" ON)
+
+if (NOT CMAKE_BUILD_TYPE)
+        set(CMAKE_BUILD_TYPE Release)
+endif(NOT CMAKE_BUILD_TYPE)
+
+
+# Begin Google local change
+
+# We use an in tree copy of boringSSL by default.
+option(USE_BORINGSSL "build with boringSSL" ON)
+option(IN_GOOGLE3 "building in google3" OFF)
+
+# The vendors subdirectories may not be present.
+#find_path(
+#  VENDORS_AMD_PATH
+#  NAMES amd.cc
+#  PATHS ${CMAKE_CURRENT_SOURCE_DIR}/vendors/amd
+#  NO_DEFAULT_PATH
+#)
+
+find_path(
+  VENDORS_INTEL_PATH
+  NAMES intel.cc
+  PATHS ${CMAKE_CURRENT_SOURCE_DIR}/vendors/intel
+  NO_DEFAULT_PATH
+)
+# End Google local change
+
+
+
+
+# Config header
+configure_file (
+        "${PROJECT_SOURCE_DIR}/config.h.in"
+        "${PROJECT_BINARY_DIR}/config.h"
+)
+include_directories("${PROJECT_BINARY_DIR}")
+###include_directories(/root/abseil_bin/include)
+include_directories(/root/Source/CMakeProject/install/include)
+if (USE_CLANG)
+        set(CMAKE_C_COMPILER clang)
+        set(CMAKE_CXX_COMPILER clang++)
+        set(CC clang-10)
+        set(CXX clang++-10)
+endif(USE_CLANG)
+
+set(CMAKE_C_FLAGS_DEBUG "-g -Wall -O0")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -O0")
+set(CMAKE_C_FLAGS_RELEASE "-Wall -O2")
+set(CMAKE_CXX_FLAGS_RELEASE "-Wall -O2")
+
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS OFF)     # we want c11 not gnu11
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)   # we want c++17 not gnu++17
+
+# set(ABSL_LIBRARIES /usr/lib/x86_64-linux-gnu/)
+
+add_executable(cpu_check cpu_check.cc)
+add_executable(crc32c_test crc32c_test.cc)
+
+set_target_properties(cpu_check PROPERTIES LINK_SEARCH_START_STATIC ON)
+set_target_properties(cpu_check PROPERTIES LINK_SEARCH_END_STATIC ON)
+
+
+#-----------------------------------------------------------------------------------------------------
+
+# Add the path to LLVMIRUtil.cmake
+#list(APPEND CMAKE_MODULE_PATH "/home/llvm-ir-cmake-utils/cmake")
+#include(LLVMIRUtil)
+
+#add_executable(long_mul_test long_mul_test.c)
+#set_target_properties(long_mul_test PROPERTIES LINKER_LANGUAGE C)
+#llvmir_attach_bc_target(longIR long_mul_test)
+#llvmir_attach_disassemble_target(long_mul_test_disassemble longIR)
+
+
+
+# Third party library - available as git submodule
+add_library(farmhash third_party/farmhash/src/farmhash.cc)
+
+add_library(avx avx.cc)
+add_library(compressor compressor.cc)
+add_library(crc32c crc32c.c)
+add_library(crypto crypto.cc)
+add_library(fvt_controller fvt_controller.cc)
+add_library(hasher hasher.cc)
+add_library(malign_buffer malign_buffer.cc)
+add_library(pattern_generator pattern_generator.cc)
+add_library(silkscreen silkscreen.cc)
+add_library(utils utils.cc)
+#add_library(intel ./vendors/intel/intel.cc)
+
+# Begin Google local change
+
+#if (VENDORS_AMD_PATH)
+#  add_library(amd ${VENDORS_AMD_PATH}/amd.cc)
+#  add_library(hsmp ${VENDORS_AMD_PATH}/hsmp.cc)
+#  target_link_libraries(amd hsmp pci)
+#  set(VENDORS_LIBS ${VENDORS_LIBS} amd)
+#endif(VENDORS_AMD_PATH)
+
+
+# set(VENDORS_INTEL_PATH "./vendors/intel")
+#if (VENDORS_INTEL_PATH)
+# add_library(intel ${VENDORS_INTEL_PATH}/intel.cc)
+   ###############################set(VENDORS_LIBS ${VENDORS_LIBS} intel)
+#endif(VENDORS_INTEL_PATH)
+
+# End Google local change
+
+
+include(CheckCXXCompilerFlag)
+###### check_cxx_compiler_flag("-march=sandybridge" ARCH_SANDYBRIDGE)
+##check_cxx_compiler_flag("-march=skylake" ARCH_SKYLAKE) #mine: commented this out to support AMD
+# check_cxx_compiler_flag("-march=skylake" ARCH_SKYLAKE)
+check_cxx_compiler_flag("-march=x86-64-v3" ARCH_SKYLAKE)
+
+###if(ARCH_SANDYBRIDGE)
+###        target_compile_options(farmhash PUBLIC -march=sandybridge)
+###        target_compile_options(crc32c PUBLIC -march=sandybridge)
+###endif(ARCH_SANDYBRIDGE)
+
+
+if(ARCH_SKYLAKE)
+	#target_compile_options(farmhash PUBLIC -march=skylake)
+	#target_compile_options(crc32c PUBLIC -march=skylake)
+
+	target_compile_options(farmhash PUBLIC -march=x86-64-v3)
+	target_compile_options(crc32c PUBLIC -march=x86-64-v3)
+endif(ARCH_SKYLAKE)
+
+
+# set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+
+if (BUILD_STATIC)
+        set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+	set(CMAKE_EXE_LINKER_FLAGS "-static-libstdc++ -static-libgcc -flegacy-pass-manager -Xclang -load -Xclang /home/cpu-check/InsertClonedInstPass.so")
+        # Static linking of C/C++ standard libraries
+	set(CMAKE_C_FLAGS "-flegacy-pass-manager -Xclang -load -Xclang /home/cpu-check/InsertClonedInstPass.so ")
+        set(CMAKE_CXX_FLAGS "-flegacy-pass-manager -Xclang -load -Xclang /home/cpu-check/InsertClonedInstPass.so") 
+endif(BUILD_STATIC)
+
+#file(GLOB GLOB_ABSL "/root/abseil_bin/lib/*.a")
+file(GLOB GLOB_ABSL "/root/Source/CMakeProject/install/lib/*.a")
+
+# Needs abseil
+find_package(absl REQUIRED)
+# include_directories()
+target_link_libraries(compressor ${GLOB_ABSL} /lib/x86_64-linux-gnu/libc.a)
+target_link_libraries(crypto ${GLOB_ABSL} /lib/x86_64-linux-gnu/libc.a  )
+target_link_libraries(fvt_controller ${GLOB_ABSL} /lib/x86_64-linux-gnu/libc.a  )
+target_link_libraries(malign_buffer ${GLOB_ABSL} /lib/x86_64-linux-gnu/libc.a  )
+target_link_libraries(silkscreen ${GLOB_ABSL} /lib/x86_64-linux-gnu/libc.a  )
+target_link_libraries(utils ${GLOB_ABSL} /lib/x86_64-linux-gnu/libc.a )
+# target_link_libraries(cpu_check ${GLOB_ABSL} -static)
+# target_link_libraries(cpu_check ${GLOB_ABSL} /lib/x86_64-linux-gnu/libc.a -static -fpass-plugin=/home/cpu-check/InsertClonedInstPass.so)
+target_link_libraries(cpu_check ${GLOB_ABSL} /lib/x86_64-linux-gnu/libc.a -static )
+
+	
+	# "-load /home/cpu-check/InsertClonedInstPass.so" "-mllvm --enable-new-pm=0" "-mllvm -insertclonedinst")
+# target_link_options(cpu_check PRIVATE -static-libgcc -static-libstdc++)
+
+# target_link_libraries(compressor /usr/lib/x86_64-linux-gnu/libabsl_status.a /usr/lib/x86_64-linux-gnu/libabsl_strings.a)
+# target_link_libraries(crypto /usr/lib/x86_64-linux-gnu/libabsl_status.a /usr/lib/x86_64-linux-gnu/libabsl_strings.a)
+# target_link_libraries(fvt_controller /usr/lib/x86_64-linux-gnu/libabsl_strings.a)
+# target_link_libraries(malign_buffer /usr/lib/x86_64-linux-gnu/libabsl_strings.a)
+# target_link_libraries(silkscreen /usr/lib/x86_64-linux-gnu/libabsl_status.a /usr/lib/x86_64-linux-gnu/libabsl_strings.a)
+# target_link_libraries(utils /usr/lib/x86_64-linux-gnu/libabsl_strings.a)
+# target_link_libraries(cpu_check /usr/lib/x86_64-linux-gnu/libabsl_failure_signal_handler.a /usr/lib/x86_64-linux-gnu/libabsl_statusor.a /usr/lib/x86_64-linux-gnu/libabsl_symbolize.a)
+
+
+# target_link_libraries(compressor absl::status absl::strings)
+# target_link_libraries(crypto absl::status absl::strings)
+# target_link_libraries(fvt_controller absl::strings)
+# target_link_libraries(malign_buffer absl::strings)
+# target_link_libraries(silkscreen absl::status absl::strings)
+# target_link_libraries(utils absl::strings)
+# target_link_libraries(cpu_check absl::failure_signal_handler absl::statusor absl::strings absl::symbolize)
+
+# Needs pthreads
+find_package(Threads REQUIRED)
+target_link_libraries(cpu_check Threads::Threads)
+
+# Needs zlib
+find_package (ZLIB REQUIRED)
+if(ZLIB_INCLUDE_DIRS)
+        include_directories(${ZLIB_INCLUDE_DIRS})
+endif(ZLIB_INCLUDE_DIRS)
+if(ZLIB_LIBRARIES)
+        target_link_libraries(cpu_check ${ZLIB_LIBRARIES})
+  target_link_libraries(compressor ${ZLIB_LIBRARIES})
+  target_link_libraries(hasher ${ZLIB_LIBRARIES})
+endif(ZLIB_LIBRARIES)
+
+
+# Needs OpenSSL
+find_package (OpenSSL REQUIRED)
+include_directories(${OPENSSL_INCLUDE_DIRS})
+target_link_libraries(cpu_check ${OPENSSL_LIBRARIES}) 
+target_link_libraries(crypto ${OPENSSL_LIBRARIES})
+target_link_libraries(hasher ${OPENSSL_LIBRARIES})
+
+# Static linking of OpenSSL may require -ldl, link it if found.
+find_library (dl dl)
+if(dl)
+        target_link_libraries(cpu_check dl)
+endif(dl)
+
+
+
+# link malign_buffer first as it has a lot of dependencies.
+target_link_libraries(malign_buffer utils)
+
+
+target_link_libraries(crc32c_test crc32c)
+target_link_libraries(compressor malign_buffer)
+target_link_libraries(crypto malign_buffer)
+target_link_libraries(hasher crc32c farmhash malign_buffer utils)
+target_link_libraries(pattern_generator malign_buffer)
+target_link_libraries(silkscreen utils)
+target_link_libraries(cpu_check  avx compressor crc32c crypto fvt_controller hasher malign_buffer pattern_generator silkscreen utils  ${GLOB_ABSL} -flegacy-pass-manager -Xclang -load "-Xclang /home/cpu-check/InsertClonedInstPass.so")
+
+install (TARGETS cpu_check DESTINATION bin)
+
+
+# # Code I added
+# # Step 0: Produce cpu_check.ll from cpu_check.cc
+# set(SOURCE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/cpu_check.cc)
+# # Output LLVM IR file
+# set(LLVM_IR_FILE "${CMAKE_BINARY_DIR}/cpu_check.ll")
+# add_custom_command(
+#     OUTPUT ${LLVM_IR_FILE}
+#     COMMAND clang-14 -emit-llvm -S -I/usr/local/google/home/vavelidou/cpu-check/result_build ${SOURCE_FILE} -o ${LLVM_IR_FILE}
+#     DEPENDS ${SOURCE_FILE}
+#     COMMENT "Generating LLVM IR from source"
+# )
+# 
+# 
+# 
+# 
+# # Step 1: Run opt with my LLVM pass
+# set(OUTPUT_BC "${CMAKE_BINARY_DIR}/result.bc")
+# add_custom_command(
+#     OUTPUT ${OUTPUT_BC}
+#     COMMAND opt-14 -load /usr/local/google/home/vavelidou/cpu-check/InsertClonedInstPass.so --enable-new-pm=0 -insertclonedinst -S ${LLVM_IR_FILE} -o ${OUTPUT_BC}
+#     DEPENDS ${LLVM_IR_FILE}
+#     COMMENT "Running LLVM pass with opt"
+# )
+# 
+# 
+# 
+# # Step 2: Compile the produced LLVM IR to an Object File
+# set(OUTPUT_O "${CMAKE_BINARY_DIR}/result.o")
+# add_custom_command(
+#     OUTPUT ${OUTPUT_O}
+#     COMMAND clang++ -c ${OUTPUT_BC} -o ${OUTPUT_O}
+#     DEPENDS ${OUTPUT_BC}
+#     COMMENT "Compiling LLVM IR to object file"
+# )
+# 
+# # Step 3: Link the Object File into an Executable
+# add_executable(result_executable ${OUTPUT_O})
+# target_link_libraries(result_executable
+#     # ... all the libraries and dependencies ...
+#     absl::failure_signal_handler absl::statusor absl::strings absl::symbolize
+#     Threads::Threads
+#     ${ZLIB_LIBRARIES}
+#     ${OPENSSL_LIBRARIES}
+#     dl
+#     farmhash avx compressor crc32c crypto fvt_controller hasher malign_buffer pattern_generator silkscreen utils
+# )
+# install (TARGETS result_executable DESTINATION bin)
+# 

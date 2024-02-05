@@ -25,8 +25,6 @@ if (NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Release)
 endif(NOT CMAKE_BUILD_TYPE)
 
-
-
 # Config header
 configure_file (
 	"${PROJECT_SOURCE_DIR}/config.h.in"
@@ -41,10 +39,19 @@ if (USE_CLANG)
 	set(CXX clang++)
 endif(USE_CLANG)
 
+# TODO required for static build?
+# set_target_properties(cpu_check PROPERTIES LINK_SEARCH_START_STATIC ON)
+# set_target_properties(cpu_check PROPERTIES LINK_SEARCH_END_STATIC ON)
+
+
+
 set(CMAKE_C_FLAGS_DEBUG "-g -Wall -O0")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -O0")
 set(CMAKE_C_FLAGS_RELEASE "-Wall -O2")
 set(CMAKE_CXX_FLAGS_RELEASE "-Wall -O2")
+
+set(absl_DIR ../abseil-cpp/build/)
+set(BUILD_STATIC ON CACHE BOOL "Build statically linked binaries")
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -80,17 +87,24 @@ endif(ARCH_SANDYBRIDGE)
 
 if (BUILD_STATIC)
 	set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+	set(CMAKE_EXE_LINKER_FLAGS "-static-libstdc++ -static-libgcc -flegacy-pass-manager -Xclang -load -Xclang ../../../InsertClonedInstPass.so")
+        # Static linking of C/C++ standard libraries
+	set(CMAKE_C_FLAGS "-flegacy-pass-manager -Xclang -load -Xclang ../../../InsertClonedInstPass.so ")
+        set(CMAKE_CXX_FLAGS "-flegacy-pass-manager -Xclang -load -Xclang ../../../InsertClonedInstPass.so") 
+
 endif(BUILD_STATIC)
+
+file(GLOB GLOB_ABSL "../abseil-cpp/build/*.a")
 
 # Needs abseil
 find_package(absl REQUIRED)
-target_link_libraries(compressor absl::status absl::strings)
-target_link_libraries(crypto absl::status absl::strings)
-target_link_libraries(fvt_controller absl::strings)
-target_link_libraries(malign_buffer absl::strings)
-target_link_libraries(silkscreen absl::status absl::strings)
-target_link_libraries(utils absl::strings)
-target_link_libraries(cpu_check absl::failure_signal_handler absl::statusor absl::strings absl::symbolize)
+target_link_libraries(compressor ${GLOB_ABSL} /lib/x86_64-linux-gnu/libc.a)
+target_link_libraries(crypto  ${GLOB_ABSL} /lib/x86_64-linux-gnu/libc.a)
+target_link_libraries(fvt_controller ${GLOB_ABSL} /lib/x86_64-linux-gnu/libc.a)
+target_link_libraries(malign_buffer ${GLOB_ABSL} /lib/x86_64-linux-gnu/libc.a)
+target_link_libraries(silkscreen ${GLOB_ABSL} /lib/x86_64-linux-gnu/libc.a)
+target_link_libraries(utils ${GLOB_ABSL} /lib/x86_64-linux-gnu/libc.a)
+target_link_libraries(cpu_check ${GLOB_ABSL} /lib/x86_64-linux-gnu/libc.a -static)
 
 # Needs pthreads
 find_package(Threads REQUIRED)
@@ -133,6 +147,7 @@ target_link_libraries(hasher crc32c farmhash malign_buffer utils)
 target_link_libraries(pattern_generator malign_buffer)
 target_link_libraries(silkscreen utils)
 
-target_link_libraries(cpu_check avx compressor crc32c crypto fvt_controller hasher malign_buffer pattern_generator silkscreen utils)
+
+target_link_libraries(cpu_check  avx compressor crc32c crypto fvt_controller hasher malign_buffer pattern_generator silkscreen utils  ${GLOB_ABSL} -flegacy-pass-manager -Xclang -load "-Xclang ../../../InsertClonedInstPass.so")
 
 install (TARGETS cpu_check DESTINATION bin)
