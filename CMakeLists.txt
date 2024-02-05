@@ -44,7 +44,6 @@ endif(USE_CLANG)
 # set_target_properties(cpu_check PROPERTIES LINK_SEARCH_END_STATIC ON)
 
 
-
 set(CMAKE_C_FLAGS_DEBUG "-g -Wall -O0")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -O0")
 set(CMAKE_C_FLAGS_RELEASE "-Wall -O2")
@@ -87,10 +86,10 @@ endif(ARCH_SANDYBRIDGE)
 
 if (BUILD_STATIC)
 	set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
-	set(CMAKE_EXE_LINKER_FLAGS "-static-libstdc++ -static-libgcc -flegacy-pass-manager -Xclang -load -Xclang ../../../InsertClonedInstPass.so")
+	set(CMAKE_EXE_LINKER_FLAGS "-static-libstdc++ -static-libgcc -Xclang -load -Xclang ../../../../InsertClonedInstPass.so")
         # Static linking of C/C++ standard libraries
-	set(CMAKE_C_FLAGS "-flegacy-pass-manager -Xclang -load -Xclang ../../../InsertClonedInstPass.so ")
-        set(CMAKE_CXX_FLAGS "-flegacy-pass-manager -Xclang -load -Xclang ../../../InsertClonedInstPass.so") 
+	set(CMAKE_C_FLAGS "-Xclang -load -Xclang  ../../../../InsertClonedInstPass.so")
+        set(CMAKE_CXX_FLAGS "-Xclang -load -Xclang ../../../../InsertClonedInstPass.so") 
 
 endif(BUILD_STATIC)
 
@@ -148,6 +147,6 @@ target_link_libraries(pattern_generator malign_buffer)
 target_link_libraries(silkscreen utils)
 
 
-target_link_libraries(cpu_check  avx compressor crc32c crypto fvt_controller hasher malign_buffer pattern_generator silkscreen utils  ${GLOB_ABSL} -flegacy-pass-manager -Xclang -load "-Xclang ../../../InsertClonedInstPass.so")
+target_link_libraries(cpu_check avx compressor crc32c crypto fvt_controller hasher malign_buffer pattern_generator silkscreen utils ${GLOB_ABSL} -Xclang -load "-Xclang ../../../../InsertClonedInstPass.so")
 
 install (TARGETS cpu_check DESTINATION bin)
