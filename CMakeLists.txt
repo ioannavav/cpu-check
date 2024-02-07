@@ -129,11 +129,26 @@ endif(ZLIB_LIBRARIES)
 
 
 # Needs OpenSSL
-find_package (OpenSSL REQUIRED)
+set(OPENSSL_INCLUDE_DIRS /home/NEW_GIT/qed_sdc/openssl/include/openssl)  #mine
+set(OPENSSL_LIBRARIES /home/NEW_GIT/qed_sdc/openssl/libssl.a)  #mine
+
 include_directories(${OPENSSL_INCLUDE_DIRS})
-target_link_libraries(cpu_check ${OPENSSL_LIBRARIES})
+target_link_libraries(cpu_check ${OPENSSL_LIBRARIES} )
 target_link_libraries(crypto ${OPENSSL_LIBRARIES})
 target_link_libraries(hasher ${OPENSSL_LIBRARIES})
+
+
+
+# find_package (OpenSSL REQUIRED)
+# include_directories(${OPENSSL_INCLUDE_DIRS} )
+# target_link_libraries(cpu_check ${OPENSSL_LIBRARIES} )
+# target_link_libraries(crypto ${OPENSSL_LIBRARIES})
+# target_link_libraries(hasher ${OPENSSL_LIBRARIES})
+
+# include_directories(${OPENSSL_INCLUDE_DIRS} /home/NEW_GIT/qed_sdc/openssl/include/crypto/)
+# target_link_libraries(cpu_check ${OPENSSL_LIBRARIES} /home/NEW_GIT/qed_sdc/openssl/libcrypto.a)
+# target_link_libraries(crypto ${OPENSSL_LIBRARIES} /home/NEW_GIT/qed_sdc/openssl/libcrypto.a)
+# target_link_libraries(hasher ${OPENSSL_LIBRARIES} /home/NEW_GIT/qed_sdc/openssl/libcrypto.a)
 
 # Static linking of OpenSSL may require -ldl, link it if found.
 find_library (dl dl)
@@ -154,6 +169,6 @@ target_link_libraries(pattern_generator malign_buffer)
 target_link_libraries(silkscreen utils)
 
 
-target_link_libraries(cpu_check avx compressor crc32c crypto fvt_controller hasher malign_buffer pattern_generator silkscreen utils ${GLOB_ABSL} "-flegacy-pass-manager -Xclang -load -Xclang /home/NEW_GIT/qed_sdc/InsertClonedInstPass.so" -static)
+target_link_libraries(cpu_check avx compressor crc32c crypto fvt_controller hasher malign_buffer pattern_generator silkscreen utils ${GLOB_ABSL} "-flegacy-pass-manager -Xclang -load -Xclang /home/NEW_GIT/qed_sdc/InsertClonedInstPass.so" /home/NEW_GIT/qed_sdc/openssl/libcrypto.a -static)
 
 install (TARGETS cpu_check DESTINATION bin)
