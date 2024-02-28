@@ -44,8 +44,8 @@ set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
 
 set(CMAKE_C_FLAGS_DEBUG "-g -Wall -O0")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -O0")
-set(CMAKE_C_FLAGS_RELEASE "-Wall -O2")
-set(CMAKE_CXX_FLAGS_RELEASE "-Wall -O2")
+####set(CMAKE_C_FLAGS_RELEASE "-Wall -O2")
+####set(CMAKE_CXX_FLAGS_RELEASE "-Wall -O2")
 
 set(absl_DIR ../abseil-cpp/build/install/lib/cmake/absl/)
 set(ABSL_INCLUDES ../abseil-cpp/build/install/include)
@@ -93,11 +93,12 @@ endif(ARCH_SANDYBRIDGE)
 
 if (BUILD_STATIC)
 	set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
-	set(CMAKE_EXE_LINKER_FLAGS "-static-libstdc++ -static-libgcc -flegacy-pass-manager -Xclang -load -Xclang /home/NEW_GIT/qed_sdc/InsertClonedInstPass.so")
+	set(CMAKE_EXE_LINKER_FLAGS "-static-libstdc++ -static-libgcc") #########-flegacy-pass-manager -Xclang -load -Xclang /home/NEW_GIT/qed_sdc/InsertClonedInstPass.so")
         # Static linking of C/C++ standard libraries
-	set(CMAKE_C_FLAGS "-flegacy-pass-manager -Xclang -load -Xclang /home/NEW_GIT/qed_sdc/InsertClonedInstPass.so" )
-	set(CMAKE_CXX_FLAGS "-flegacy-pass-manager -Xclang -load -Xclang /home/NEW_GIT/qed_sdc/InsertClonedInstPass.so") 
-
+	############set(CMAKE_C_FLAGS "-O2 -flegacy-pass-manager -Xclang -load -Xclang /home/NEW_GIT/qed_sdc/InsertClonedInstPass.so" )
+	############set(CMAKE_CXX_FLAGS "-O2 -flegacy-pass-manager -Xclang -load -Xclang /home/NEW_GIT/qed_sdc/InsertClonedInstPass.so") 
+   set(CMAKE_C_FLAGS "-O0")
+   set(CMAKE_CXX_FLAGS "-O0") 
 endif(BUILD_STATIC)
 
 file(GLOB GLOB_ABSL "../abseil-cpp/build/install/lib/*.a")
@@ -129,21 +130,21 @@ endif(ZLIB_LIBRARIES)
 
 
 # Needs OpenSSL
-set(OPENSSL_INCLUDE_DIRS /home/NEW_GIT/qed_sdc/openssl/include/openssl)  #mine
-set(OPENSSL_LIBRARIES /home/NEW_GIT/qed_sdc/openssl/libssl.a)  #mine
+#Use instrumented OpenSSL
+####set(OPENSSL_INCLUDE_DIRS /home/NEW_GIT/qed_sdc/openssl/include/openssl)  #mine
+####set(OPENSSL_LIBRARIES /home/NEW_GIT/qed_sdc/openssl/libssl.a)  #mine
+####include_directories(${OPENSSL_INCLUDE_DIRS})
+####target_link_libraries(cpu_check ${OPENSSL_LIBRARIES} )
+####target_link_libraries(crypto ${OPENSSL_LIBRARIES})
+####target_link_libraries(hasher ${OPENSSL_LIBRARIES})
 
-include_directories(${OPENSSL_INCLUDE_DIRS})
+
+#Use default OpenSSL
+find_package (OpenSSL REQUIRED)
+include_directories(${OPENSSL_INCLUDE_DIRS} )
 target_link_libraries(cpu_check ${OPENSSL_LIBRARIES} )
 target_link_libraries(crypto ${OPENSSL_LIBRARIES})
 target_link_libraries(hasher ${OPENSSL_LIBRARIES})
-
-
-
-# find_package (OpenSSL REQUIRED)
-# include_directories(${OPENSSL_INCLUDE_DIRS} )
-# target_link_libraries(cpu_check ${OPENSSL_LIBRARIES} )
-# target_link_libraries(crypto ${OPENSSL_LIBRARIES})
-# target_link_libraries(hasher ${OPENSSL_LIBRARIES})
 
 # include_directories(${OPENSSL_INCLUDE_DIRS} /home/NEW_GIT/qed_sdc/openssl/include/crypto/)
 # target_link_libraries(cpu_check ${OPENSSL_LIBRARIES} /home/NEW_GIT/qed_sdc/openssl/libcrypto.a)
@@ -161,7 +162,7 @@ endif(dl)
 # link malign_buffer first as it has a lot of dependencies.
 target_link_libraries(malign_buffer utils)
 
-target_link_libraries(crc32c_test crc32c)
+target_link_libraries(crc32c_test crc32c /home/NEW_GIT/qed_sdc/prettyprint.o /home/NEW_GIT/qed_sdc/mmap_file.o)
 target_link_libraries(compressor malign_buffer)
 target_link_libraries(crypto malign_buffer)
 target_link_libraries(hasher crc32c farmhash malign_buffer utils)
@@ -169,6 +170,6 @@ target_link_libraries(pattern_generator malign_buffer)
 target_link_libraries(silkscreen utils)
 
 
-target_link_libraries(cpu_check avx compressor crc32c crypto fvt_controller hasher malign_buffer pattern_generator silkscreen utils ${GLOB_ABSL} "-flegacy-pass-manager -Xclang -load -Xclang /home/NEW_GIT/qed_sdc/InsertClonedInstPass.so" /home/NEW_GIT/qed_sdc/openssl/libcrypto.a -static)
+target_link_libraries(cpu_check avx compressor crc32c crypto fvt_controller hasher malign_buffer pattern_generator silkscreen utils ${GLOB_ABSL} -static) #################"-flegacy-pass-manager -Xclang -load -Xclang /home/NEW_GIT/qed_sdc/InsertClonedInstPass.so" /home/NEW_GIT/qed_sdc/prettyprint.o /home/NEW_GIT/qed_sdc/mmap_file.o -static) #/home/NEW_GIT/qed_sdc/openssl/libcrypto.a -static)
 
 install (TARGETS cpu_check DESTINATION bin)
