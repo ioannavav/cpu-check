@@ -93,12 +93,10 @@ endif(ARCH_SANDYBRIDGE)
 
 if (BUILD_STATIC)
 	set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
-	set(CMAKE_EXE_LINKER_FLAGS "-static-libstdc++ -static-libgcc") #########-flegacy-pass-manager -Xclang -load -Xclang /home/NEW_GIT/qed_sdc/InsertClonedInstPass.so")
+	set(CMAKE_EXE_LINKER_FLAGS "-static-libstdc++ -static-libgcc -flegacy-pass-manager -Xclang -load -Xclang /home/NEW_GIT/qed_sdc/InsertClonedInstPass.so")
         # Static linking of C/C++ standard libraries
-	############set(CMAKE_C_FLAGS "-O2 -flegacy-pass-manager -Xclang -load -Xclang /home/NEW_GIT/qed_sdc/InsertClonedInstPass.so" )
-	############set(CMAKE_CXX_FLAGS "-O2 -flegacy-pass-manager -Xclang -load -Xclang /home/NEW_GIT/qed_sdc/InsertClonedInstPass.so") 
-   set(CMAKE_C_FLAGS "-O0")
-   set(CMAKE_CXX_FLAGS "-O0") 
+	set(CMAKE_C_FLAGS "-O0 -flegacy-pass-manager -Xclang -load -Xclang /home/NEW_GIT/qed_sdc/InsertClonedInstPass.so" )
+	set(CMAKE_CXX_FLAGS "-O0 -flegacy-pass-manager -Xclang -load -Xclang /home/NEW_GIT/qed_sdc/InsertClonedInstPass.so") 
 endif(BUILD_STATIC)
 
 file(GLOB GLOB_ABSL "../abseil-cpp/build/install/lib/*.a")
@@ -170,6 +168,6 @@ target_link_libraries(pattern_generator malign_buffer)
 target_link_libraries(silkscreen utils)
 
 
-target_link_libraries(cpu_check avx compressor crc32c crypto fvt_controller hasher malign_buffer pattern_generator silkscreen utils ${GLOB_ABSL} -static) #################"-flegacy-pass-manager -Xclang -load -Xclang /home/NEW_GIT/qed_sdc/InsertClonedInstPass.so" /home/NEW_GIT/qed_sdc/prettyprint.o /home/NEW_GIT/qed_sdc/mmap_file.o -static) #/home/NEW_GIT/qed_sdc/openssl/libcrypto.a -static)
+target_link_libraries(cpu_check avx compressor crc32c crypto fvt_controller hasher malign_buffer pattern_generator silkscreen utils ${GLOB_ABSL} -flegacy-pass-manager -Xclang -load -Xclang /home/NEW_GIT/qed_sdc/InsertClonedInstPass.so /home/NEW_GIT/qed_sdc/prettyprint.o /home/NEW_GIT/qed_sdc/mmap_file.o -static) #/home/NEW_GIT/qed_sdc/openssl/libcrypto.a -static)
 
 install (TARGETS cpu_check DESTINATION bin)
