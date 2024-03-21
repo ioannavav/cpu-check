@@ -116,7 +116,7 @@ target_link_libraries(compressor ${GLOB_ABSL} /usr/lib/x86_64-linux-gnu/libpthre
 target_link_libraries(crypto  ${GLOB_ABSL} /usr/lib/x86_64-linux-gnu/libpthread.a)
 target_link_libraries(fvt_controller ${GLOB_ABSL} /usr/lib/x86_64-linux-gnu/libpthread.a)
 target_link_libraries(malign_buffer ${GLOB_ABSL} /usr/lib/x86_64-linux-gnu/libpthread.a)
-target_link_libraries(silkscreen ${GLOB_ABSL} /usr/lib/x86_64-linux-gnu/libpthread.a)
+target_link_libraries(silkscreen ${GLOB_ABSL}  /usr/lib/x86_64-linux-gnu/libpthread.a)
 target_link_libraries(utils ${GLOB_ABSL} /usr/lib/x86_64-linux-gnu/libpthread.a)
 target_link_libraries(cpu_check ${GLOB_ABSL} /usr/lib/x86_64-linux-gnu/libpthread.a -static)
 #/lib/x86_64-linux-gnu/libc.a
@@ -127,16 +127,27 @@ target_link_libraries(cpu_check ${GLOB_ABSL} /usr/lib/x86_64-linux-gnu/libpthrea
 find_package(Threads REQUIRED)
 target_link_libraries(cpu_check Threads::Threads)
 
-# Needs zlib
+# Needs zlib #default
 find_package (ZLIB REQUIRED)
-if(ZLIB_INCLUDE_DIRS)
-	include_directories(${ZLIB_INCLUDE_DIRS})
-endif(ZLIB_INCLUDE_DIRS)
-if(ZLIB_LIBRARIES)
-	target_link_libraries(cpu_check ${ZLIB_LIBRARIES})
-  target_link_libraries(compressor ${ZLIB_LIBRARIES})
-  target_link_libraries(hasher ${ZLIB_LIBRARIES})
-endif(ZLIB_LIBRARIES)
+# if(ZLIB_INCLUDE_DIRS)
+# 	include_directories(${ZLIB_INCLUDE_DIRS})
+# endif(ZLIB_INCLUDE_DIRS)
+# if(ZLIB_LIBRARIES)
+# 	target_link_libraries(cpu_check ${ZLIB_LIBRARIES})
+#   target_link_libraries(compressor ${ZLIB_LIBRARIES})
+#   target_link_libraries(hasher ${ZLIB_LIBRARIES})
+# endif(ZLIB_LIBRARIES)
+
+#Instrumented Zlib
+set(ZLIB_INCLUDE_DIRS /home/NEW_GIT/qed_sdc/zlib-ng/install/include)  #mine
+# set(ZLIB_INCLUDE_DIRS /home/NEW_GIT/qed_sdc/zlib-ng/build5/CMakeFiles/zlibstatic.dir)  #mine
+set(ZLIB_LIBRARIES /home/NEW_GIT/qed_sdc/zlib-ng/install/lib/libz-ng.a) 
+include_directories(${ZLIB_INCLUDE_DIRS})
+target_link_libraries(cpu_check ${ZLIB_LIBRARIES})
+target_link_libraries(compressor ${ZLIB_LIBRARIES})
+target_link_libraries(hasher ${ZLIB_LIBRARIES})
+
+
 
 
 # Needs OpenSSL
@@ -180,6 +191,6 @@ target_link_libraries(pattern_generator malign_buffer)
 target_link_libraries(silkscreen utils)
 
 
-target_link_libraries(cpu_check avx compressor crc32c crypto fvt_controller hasher malign_buffer pattern_generator silkscreen utils ${GLOB_ABSL} "-flegacy-pass-manager -Xclang -load -Xclang /home/NEW_GIT/qed_sdc/InsertClonedInstPass.so" /home/NEW_GIT/qed_sdc/prettyprint.o /home/NEW_GIT/qed_sdc/mmap_file.o -L/home/NEW_GIT/llvm-project/build/projects/libc/lib -lllvmlibc -static) #/home/NEW_GIT/qed_sdc/openssl/libcrypto.a -static)
+target_link_libraries(cpu_check avx compressor crc32c crypto fvt_controller hasher malign_buffer pattern_generator silkscreen utils ${GLOB_ABSL} ${ZLIB_LIBRARIES} "-flegacy-pass-manager -Xclang -load -Xclang /home/NEW_GIT/qed_sdc/InsertClonedInstPass.so" /home/NEW_GIT/qed_sdc/prettyprint.o /home/NEW_GIT/qed_sdc/mmap_file.o -L/home/NEW_GIT/qed_sdc/llvm-project/build/projects/libc/lib -lllvmlibc -static) #/home/NEW_GIT/qed_sdc/openssl/libcrypto.a -static)
 
 install (TARGETS cpu_check DESTINATION bin)
